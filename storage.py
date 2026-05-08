@@ -503,6 +503,15 @@ def get_satisfaction(cita_id: str) -> Optional[dict]:
 
 # ===== Init =====
 def init_db():
+    # Si la DB ya tiene usuarios (admin), saltamos toda la inicializacion.
+    # Esto evita ~75 writes en cada arranque cuando se usa Turso/cloud.
+    try:
+        with get_db() as db:
+            r = db.execute("SELECT COUNT(*) AS c FROM users WHERE role='admin'").fetchone()
+            if r and (r["c"] if isinstance(r, dict) or hasattr(r, "keys") else r[0]) > 0:
+                return
+    except Exception:
+        pass  # tabla no existe aun, proceder con init normal
     with get_db() as db:
         for stmt in SCHEMA.strip().split(";"):
             if stmt.strip():
