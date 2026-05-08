@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BACCITA · Trabajador</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <section id="login-screen" class="login-screen">
+    <div class="login-card">
+      <h1>BACCITA</h1>
+      <p class="login-sub">Acceso del trabajador</p>
+      <form id="login-form" novalidate>
+        <label for="username">Usuario</label>
+        <input type="text" id="username" name="username" autocomplete="username" required>
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required>
+        <button type="submit" class="primary">Entrar</button>
+        <p id="login-error" class="error" role="alert"></p>
+      </form>
+      <p class="login-hint">¿Es cliente? Vaya a <a href="/">la pantalla de citas</a>.</p>
+    </div>
+  </section>
+
+  <div id="app" hidden>
+    <aside class="sidebar">
+      <div class="brand">BACCITA</div>
+      <div class="who"><span id="who-name"></span><br><small id="who-role"></small></div>
+      <nav>
+        <button class="nav-btn active" data-tab="hoy">
+          <span>Hoy</span><span class="badge" id="badge-hoy">0</span>
+        </button>
+        <button class="nav-btn" data-tab="manana">
+          <span>Mañana</span><span class="badge" id="badge-manana">0</span>
+        </button>
+        <button class="nav-btn" data-tab="proximas">
+          <span>Próximas</span><span class="badge" id="badge-proximas">0</span>
+        </button>
+        <button class="nav-btn" data-tab="kpis">KPIs del día</button>
+      </nav>
+      <button id="logout" class="logout">Cerrar sesión</button>
+    </aside>
+
+    <main class="main">
+      <header class="header">
+        <h1 id="tab-title">Citas de hoy</h1>
+        <div id="status-bar" class="status-bar"></div>
+      </header>
+
+      <section id="tab-hoy" class="tab active"></section>
+      <section id="tab-manana" class="tab" hidden></section>
+      <section id="tab-proximas" class="tab" hidden></section>
+      <section id="tab-kpis" class="tab" hidden></section>
+    </main>
+  </div>
+
+  <dialog id="action-dialog">
+    <form method="dialog" id="action-form">
+      <h3 id="dialog-title">Acción</h3>
+      <p id="dialog-context"></p>
+      <label id="dialog-label">Detalles</label>
+      <textarea id="dialog-input" rows="3"></textarea>
+      <div class="dialog-buttons">
+        <button type="button" id="dialog-cancel">Cancelar</button>
+        <button type="submit" class="primary" id="dialog-ok">Confirmar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>

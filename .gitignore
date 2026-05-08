@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Datos runtime (se regenera por seed en el container)
+data/baccita.db
+data/*.lock
+data/*.tmp
+data/*.wav
+
+# Secretos - NUNCA commitear
+.env
+certs/
+
+# Binarios y logs locales (no necesarios en el container HF)
+cloudflared.exe
+cloudflared.log
+*.log
+.claude

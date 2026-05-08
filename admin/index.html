@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BACCITA · Administración</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <section id="login-screen" class="login-screen">
+    <div class="login-card">
+      <h1>BACCITA</h1>
+      <p class="login-sub">Panel de administración</p>
+      <form id="login-form" novalidate>
+        <label for="username">Usuario</label>
+        <input type="text" id="username" autocomplete="username" required>
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" autocomplete="current-password" required>
+        <button type="submit" class="primary">Entrar</button>
+        <p id="login-error" class="error" role="alert"></p>
+      </form>
+    </div>
+  </section>
+
+  <div id="app" hidden>
+    <aside class="sidebar">
+      <div class="brand">BACCITA<br><small>Admin</small></div>
+      <div class="who"><span id="who-name"></span></div>
+      <nav>
+        <button class="nav-btn active" data-tab="kpis">KPIs globales</button>
+        <button class="nav-btn" data-tab="comparativo">Comparativo trabajadores</button>
+        <button class="nav-btn" data-tab="trabajadores">Trabajadores</button>
+        <button class="nav-btn" data-tab="areas">Áreas</button>
+        <button class="nav-btn" data-tab="servicios">Servicios</button>
+        <button class="nav-btn" data-tab="config">Configuración</button>
+      </nav>
+      <button id="logout" class="logout">Cerrar sesión</button>
+    </aside>
+
+    <main class="main">
+      <header class="header">
+        <h1 id="tab-title">KPIs globales</h1>
+        <div id="status-bar" class="status-bar"></div>
+      </header>
+      <section id="tab-kpis" class="tab"></section>
+      <section id="tab-comparativo" class="tab" hidden></section>
+      <section id="tab-trabajadores" class="tab" hidden></section>
+      <section id="tab-areas" class="tab" hidden></section>
+      <section id="tab-servicios" class="tab" hidden></section>
+      <section id="tab-config" class="tab" hidden></section>
+    </main>
+  </div>
+
+  <dialog id="dlg">
+    <form method="dialog" id="dlg-form">
+      <h3 id="dlg-title">Acción</h3>
+      <div id="dlg-fields"></div>
+      <div class="dialog-buttons">
+        <button type="button" id="dlg-cancel">Cancelar</button>
+        <button type="submit" class="primary" id="dlg-ok">Guardar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

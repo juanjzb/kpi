@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0A2A66">
+  <title>Agendar cita - BACCITA</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a href="#main" class="skip-link">Saltar al contenido principal</a>
+
+  <header role="banner">
+    <div class="header-row">
+      <div>
+        <h1>BACCITA</h1>
+        <p class="tagline">Agenda tu cita</p>
+      </div>
+      <button type="button" id="account-btn" class="account-btn" aria-label="Mi cuenta">
+        <span id="account-label">Mi cuenta</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+
+    <section id="intro-card" class="intro-card" aria-labelledby="intro-title">
+      <h2 id="intro-title">¿Cómo prefiere agendar?</h2>
+      <p>Elija el modo que más le convenga.</p>
+      <div class="intro-options">
+        <button type="button" id="start-voice" class="big-option primary">
+          <span class="big-option-title">Modo voz</span>
+          <span class="big-option-sub">La aplicación le hablará y le hará preguntas. Recomendado para personas no videntes.</span>
+        </button>
+        <button type="button" id="start-manual" class="big-option">
+          <span class="big-option-title">Modo manual</span>
+          <span class="big-option-sub">Llene el formulario por su cuenta usando el teclado o la pantalla.</span>
+        </button>
+      </div>
+    </section>
+
+    <section id="voice-flow" class="voice-flow" hidden aria-labelledby="voice-flow-title">
+      <h2 id="voice-flow-title">Modo voz</h2>
+      <p id="voice-prompt" class="voice-prompt" aria-live="polite" aria-atomic="true"></p>
+      <div id="voice-status" class="voice-status" aria-live="polite" aria-atomic="true"></div>
+      <dl id="voice-data" class="voice-data" aria-label="Datos capturados"></dl>
+      <button type="button" id="btn-speak" class="primary speak-btn" hidden>Hablar</button>
+      <div class="voice-buttons">
+        <button type="button" id="btn-yes" class="primary big-option">Sí</button>
+        <button type="button" id="btn-no" class="big-option">No</button>
+        <button type="button" id="btn-repeat" class="big-option">Repetir</button>
+      </div>
+      <button type="button" id="btn-exit-voice" class="exit-link">Salir del modo voz</button>
+    </section>
+
+    <div id="manual-mode" hidden>
+      <section class="voice-toggle" aria-labelledby="voice-title">
+        <h2 id="voice-title" class="visually-hidden">Narrador y dictado</h2>
+        <button type="button" id="voice-toggle" aria-pressed="false">
+          Activar narrador
+        </button>
+        <p class="hint" id="voice-hint">
+          El narrador lee cada campo en voz alta y muestra un botón "Dictar" junto a los campos donde tu navegador lo soporte.
+        </p>
+      </section>
+
+      <div role="status" aria-live="polite" aria-atomic="true" id="status" class="status"></div>
+
+      <form id="cita-form" novalidate aria-describedby="form-help">
+      <p id="form-help" class="visually-hidden">
+        Todos los campos marcados como obligatorios deben completarse antes de enviar.
+      </p>
+
+      <fieldset>
+        <legend>Datos del cliente</legend>
+
+        <div class="field">
+          <label for="nombre">Nombre completo <span aria-hidden="true">*</span></label>
+          <input type="text" id="nombre" name="nombre" required autocomplete="name" aria-required="true">
+          <button type="button" class="dictate-btn" data-target="nombre" hidden aria-label="Dictar nombre por voz">Dictar</button>
+        </div>
+
+        <div class="field">
+          <label for="cedula">Cédula <span aria-hidden="true">*</span></label>
+          <input type="text" id="cedula" name="cedula" required
+                 inputmode="numeric" autocapitalize="characters" maxlength="16"
+                 placeholder="000-000000-0000X"
+                 pattern="[0-9]{3}-[0-9]{6}-[0-9]{4}[A-Za-z]"
+                 aria-required="true" aria-describedby="cedula-help">
+          <small id="cedula-help" class="field-help">Formato: 3 dígitos, 6 dígitos, 4 dígitos y una letra. Ejemplo: 001-310590-0027L.</small>
+          <button type="button" class="dictate-btn" data-target="cedula" hidden aria-label="Dictar cédula por voz">Dictar</button>
+        </div>
+
+        <div class="field">
+          <label for="telefono">Teléfono</label>
+          <input type="tel" id="telefono" name="telefono" inputmode="tel" autocomplete="tel">
+          <button type="button" class="dictate-btn" data-target="telefono" hidden aria-label="Dictar teléfono por voz">Dictar</button>
+        </div>
+
+        <div class="field">
+          <label for="correo">Correo electrónico</label>
+          <input type="email" id="correo" name="correo" autocomplete="email" inputmode="email">
+        </div>
+
+        <div class="field check">
+          <input type="checkbox" id="accesibilidad" name="accesibilidad">
+          <label for="accesibilidad">Soy persona con capacidades diferentes</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Servicio</legend>
+
+        <div class="field">
+          <label for="servicio">Servicio <span aria-hidden="true">*</span></label>
+          <select id="servicio" name="servicio" required aria-required="true">
+            <option value="">-- Selecciona --</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="subservicio">Tipo de servicio <span aria-hidden="true">*</span></label>
+          <select id="subservicio" name="subservicio" required aria-required="true">
+            <option value="">-- Selecciona primero el servicio --</option>
+          </select>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Fecha y hora</legend>
+
+        <div class="field">
+          <label for="fecha">Fecha <span aria-hidden="true">*</span></label>
+          <input type="date" id="fecha" name="fecha" required aria-required="true">
+        </div>
+
+        <div class="field">
+          <label for="hora">Hora <span aria-hidden="true">*</span></label>
+          <select id="hora" name="hora" required aria-required="true">
+            <option value="">-- Selecciona --</option>
+          </select>
+        </div>
+      </fieldset>
+
+      <button type="submit" class="primary">Agendar cita</button>
+    </form>
+    </div>
+
+    <section id="confirmation" class="confirmation" hidden role="region" aria-labelledby="confirmation-title" tabindex="-1">
+      <h2 id="confirmation-title">Cita agendada</h2>
+      <p id="confirmation-detail"></p>
+      <button type="button" id="new-cita" class="primary">Agendar otra cita</button>
+    </section>
+
+    <section id="account" class="account-section" hidden>
+      <div id="account-not-logged">
+        <h2>Iniciar sesión</h2>
+        <form id="login-form-c" novalidate>
+          <label for="login-username">Usuario</label>
+          <input type="text" id="login-username" autocomplete="username" required>
+          <label for="login-password">Contraseña</label>
+          <input type="password" id="login-password" autocomplete="current-password" required>
+          <button type="submit" class="primary">Entrar</button>
+          <p id="login-error-c" class="account-error"></p>
+        </form>
+        <hr>
+        <details>
+          <summary>¿No tiene cuenta? Crear una</summary>
+          <form id="register-form-c" novalidate>
+            <label for="reg-username">Usuario</label>
+            <input type="text" id="reg-username" required>
+            <label for="reg-password">Contraseña</label>
+            <input type="password" id="reg-password" required minlength="4">
+            <label for="reg-name">Nombre completo</label>
+            <input type="text" id="reg-name" required>
+            <label for="reg-cedula">Cédula (opcional)</label>
+            <input type="text" id="reg-cedula" placeholder="000-000000-0000X" maxlength="16" pattern="[0-9]{3}-[0-9]{6}-[0-9]{4}[A-Za-z]">
+            <label for="reg-phone">Teléfono</label>
+            <input type="tel" id="reg-phone">
+            <label for="reg-email">Correo</label>
+            <input type="email" id="reg-email">
+            <label class="check"><input type="checkbox" id="reg-accesibilidad"> Soy persona con capacidades diferentes</label>
+            <button type="submit" class="primary">Crear cuenta</button>
+            <p id="register-error-c" class="account-error"></p>
+          </form>
+        </details>
+      </div>
+      <div id="account-logged" hidden>
+        <h2>Hola, <span id="logged-name"></span></h2>
+        <button type="button" id="agendar-nueva" class="primary" style="width:auto;margin:0.5rem 0">+ Agendar nueva cita</button>
+        <button type="button" id="logout-c" class="exit-link">Cerrar sesión</button>
+        <h3>Mis citas</h3>
+        <div id="mis-citas"></div>
+      </div>
+      <button type="button" id="account-back" class="exit-link">Volver al inicio</button>
+    </section>
+
+    <dialog id="satisfaction-dialog">
+      <form method="dialog" id="satisfaction-form">
+        <h3>Encuesta de satisfacción</h3>
+        <p id="sat-cita-info"></p>
+        <div id="sat-questions"></div>
+        <label for="sat-comentario">Comentario (opcional)</label>
+        <textarea id="sat-comentario" rows="3"></textarea>
+        <div class="dialog-buttons">
+          <button type="button" id="sat-cancel">Cancelar</button>
+          <button type="submit" class="primary">Enviar</button>
+        </div>
+      </form>
+    </dialog>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
