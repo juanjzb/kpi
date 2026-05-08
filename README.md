@@ -134,6 +134,44 @@ Para configurar Turso:
 6. Localmente, exportar las env vars y correr `python seed_data.py` para poblar
 7. En Render, agregar las dos env vars y restart
 
+## Conexión con Power BI
+
+5 endpoints REST devuelven JSON plano listo para Power BI / Looker / cualquier BI tool con conector Web:
+
+| Endpoint | Devuelve |
+|---|---|
+| `GET /api/bi/citas?key=...` | Todas las citas con cliente, trabajador, servicio, estado, duración, satisfacción |
+| `GET /api/bi/satisfaction?key=...` | Encuestas con detalle del trabajador atendido |
+| `GET /api/bi/workers-summary?key=...&fecha_min=YYYY-MM-DD&fecha_max=YYYY-MM-DD` | KPIs agregados por trabajador (default: últimos 30 días) |
+| `GET /api/bi/timeseries-daily?key=...&days=30` | Citas por día con métricas (cumplimiento %, satisfacción %, etc.) |
+| `GET /api/bi/areas-summary?key=...` | Citas por área (detectar cuellos de botella) |
+
+### Configuración
+
+1. En Render → **Environment** → agregar variable:
+   ```
+   BI_API_KEY = <una clave aleatoria, ej: una UUID>
+   ```
+2. Sin `BI_API_KEY` → endpoints devuelven 503. Con `?key=` incorrecta → 401.
+
+### Power BI Desktop
+
+1. **Inicio → Obtener datos → Web**
+2. URL: `https://kpi-huc5.onrender.com/api/bi/citas?key=TU_BI_KEY`
+3. **Conectar → A tabla → expandir registros → Cargar**
+4. Repetir para los otros endpoints (cada uno se vuelve una tabla)
+5. Crear relaciones entre `cita_id`, `trabajador_id`, etc. en el **Modelo**
+6. **Guardar como `.pbix`**
+
+### Power BI Service (online, gratis)
+
+1. Desde Desktop: **Publicar → Mi área de trabajo**
+2. En app.powerbi.com → tu dataset → **Settings → Scheduled refresh**
+3. Configurar frecuencia (hasta 8 veces/día en plan gratis)
+4. **NO necesita data gateway** porque la URL es HTTPS pública
+
+Los dashboards online se actualizan automáticamente con los datos más recientes de Turso.
+
 ## Licencia
 
 MIT

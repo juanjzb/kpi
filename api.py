@@ -21,6 +21,17 @@ load_dotenv()
 
 CEDULA_RE = re.compile(r"^\d{3}-\d{6}-\d{4}[A-Z]$")
 
+# ---- BI (Power BI / Looker / etc.) ----
+BI_API_KEY = os.environ.get("BI_API_KEY", "").strip()
+
+
+def _check_bi(key: str):
+    if not BI_API_KEY:
+        raise HTTPException(503, "BI no configurado en el servidor (falta BI_API_KEY)")
+    if key != BI_API_KEY:
+        raise HTTPException(401, "BI key inválida")
+
+
 # ---- LLM (Groq) ----
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
 GROQ_MODEL = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile").strip() or "llama-3.3-70b-versatile"
@@ -850,6 +861,155 @@ def extract(req: ExtractIn):
     except Exception as e:
         print(f"[groq] {req.field}: {type(e).__name__}: {e}", file=sys.stderr)
         return {"value": None}
+
+
+# ---- BI endpoints (Power BI, Looker, etc.) ----
+# JSON plano sin auth de sesion - usa ?key=<BI_API_KEY> en el query string.
+
+@app.get("/api/bi/citas")
+def bi_citas(key: str = ""):
+    """Todas las citas con campos planos para tabla pivote."""
+    _check_bi(key)
+    citas = storage.list_citas()
+    out = []
+    for c in citas:
+        d = c.get("duracion") or 0.0
+        out.append({
+            "cita_id": c["id"],
+            "cliente_id": c["client_id"],
+            "cliente_nombre": c["cliente_nombre"],
+            "cliente_cedula": c["cliente_cedula"],
+            "cliente_telefono": c["cliente_telefono"],
+            "cliente_correo": c["cliente_correo"],
+            "accesibilidad": bool(c["accesibilidad"]),
+            "trabajador_id": c["worker_id"],
+            "trabajador_nombre": c.get("worker_name") or "",
+            "servicio": c["servicio_nombre"],
+            "subservicio": c["subservicio_nombre"] or "",
+            "fecha": c["fecha"],
+            "hora": c["hora"],
+            "fecha_hora": f"{c['fecha']} {c['hora']}",
+            "estado": c["estado"],
+            "inicio": c.get("inicio"),
+            "fin": c.get("fin"),
+            "duracion_min": float(d),
+            "motivo_no_atencion": c.get("motivo_no_atencion") or "",
+            "observaciones": c.get("observaciones") or "",
+            "satisfaccion_pct": c.get("satisfaction_puntaje"),
+            "tiene_encuesta": bool(c.get("has_satisfaction")),
+            "creada": c["created_at"],
+        })
+    return out
+
+
+@app.get("/api/bi/satisfaction")
+def bi_satisfaction(key: str = ""):
+    """Encuestas con detalle del trabajador y servicio."""
+    _check_bi(key)
+    citas = storage.list_citas()
+    out = []
+    for c in citas:
+        if not c.get("has_satisfaction"):
+            continue
+        s = storage.get_satisfaction(c["id"]) or {}
+        out.append({
+            "cita_id": c["id"],
+            "fecha": c["fecha"],
+            "hora": c["hora"],
+            "trabajador_id": c["worker_id"],
+            "trabajador_nombre": c.get("worker_name") or "",
+            "servicio": c["servicio_nombre"],
+            "subservicio": c["subservicio_nombre"] or "",
+            "cliente_nombre": c["cliente_nombre"],
+            "puntaje_pct": s.get("puntaje"),
+            "comentario": s.get("comentario") or "",
+            "respuestas": s.get("respuestas") or "",
+            "creada": s.get("created_at"),
+        })
+    return out
+
+
+@app.get("/api/bi/workers-summary")
+def bi_workers_summary(key: str = "",
+                       fecha_min: Optional[str] = None,
+                       fecha_max: Optional[str] = None):
+    """KPIs por trabajador para el rango (default: ultimos 30 dias)."""
+    _check_bi(key)
+    if not fecha_max:
+        fecha_max = date.today().isoformat()
+    if not fecha_min:
+        fecha_min = (date.today() - timedelta(days=29)).isoformat()
+    settings = storage.get_all_settings()
+    workers = storage.list_workers()
+    out = []
+    for w in workers:
+        citas = storage.list_citas({
+            "worker_id": w["id"],
+            "fecha_min": fecha_min,
+            "fecha_max": fecha_max,
+        })
+        kpi = _kpi_for(citas, settings)
+        out.append({
+            "trabajador_id": w["id"],
+            "trabajador_nombre": w["name"],
+            "username": w["username"],
+            "accesibilidad": bool(w.get("accesibilidad")),
+            "fecha_min": fecha_min,
+            "fecha_max": fecha_max,
+            **kpi,
+        })
+    return out
+
+
+@app.get("/api/bi/timeseries-daily")
+def bi_timeseries_daily(key: str = "", days: int = 30):
+    """Citas por dia con metricas, para line/bar charts en Power BI."""
+    _check_bi(key)
+    days = max(1, min(180, days))
+    today = date.today()
+    settings = storage.get_all_settings()
+    out = []
+    for i in range(days - 1, -1, -1):
+        d = today - timedelta(days=i)
+        fecha_str = d.isoformat()
+        citas = storage.list_citas({"fecha": fecha_str})
+        kpi = _kpi_for(citas, settings)
+        out.append({
+            "fecha": fecha_str,
+            "dia_semana": d.strftime("%A"),
+            "es_fin_semana": d.weekday() >= 5,
+            **kpi,
+        })
+    return out
+
+
+@app.get("/api/bi/areas-summary")
+def bi_areas_summary(key: str = "",
+                     fecha_min: Optional[str] = None,
+                     fecha_max: Optional[str] = None):
+    """Citas por area para identificar cuellos de botella."""
+    _check_bi(key)
+    if not fecha_max:
+        fecha_max = date.today().isoformat()
+    if not fecha_min:
+        fecha_min = (date.today() - timedelta(days=29)).isoformat()
+    citas = storage.list_citas({"fecha_min": fecha_min, "fecha_max": fecha_max})
+    by_area: dict = {}
+    for c in citas:
+        area = c["servicio_nombre"]
+        if area not in by_area:
+            by_area[area] = {
+                "area": area,
+                "total": 0, "atendidas": 0, "canceladas": 0,
+                "no_atendidas": 0, "pendientes": 0, "en_proceso": 0,
+                "duracion_total_min": 0.0,
+            }
+        by_area[area]["total"] += 1
+        by_area[area][c["estado"] + "s" if c["estado"] != "en_proceso" else "en_proceso"] = \
+            by_area[area].get(c["estado"] + "s" if c["estado"] != "en_proceso" else "en_proceso", 0) + 1
+        if c["estado"] == "atendida" and c.get("duracion"):
+            by_area[area]["duracion_total_min"] += float(c["duracion"])
+    return [{**v, "fecha_min": fecha_min, "fecha_max": fecha_max} for v in by_area.values()]
 
 
 # ---- Static portals ----
