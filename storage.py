@@ -1,5 +1,10 @@
-"""SQLite storage para BACCITA: usuarios, citas, servicios, áreas, satisfacción, settings, sesiones."""
+"""SQLite storage para BACCITA: usuarios, citas, servicios, áreas, satisfacción, settings, sesiones.
+
+Si TURSO_DATABASE_URL y TURSO_AUTH_TOKEN estan seteadas como env vars,
+usa Turso (libSQL en la nube) via HTTP. Si no, usa SQLite local.
+"""
 import json
+import os
 import secrets
 import sqlite3
 import uuid
@@ -13,6 +18,10 @@ import bcrypt
 DATA_DIR = Path(__file__).parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
 DB_PATH = DATA_DIR / "baccita.db"
+
+TURSO_URL = os.environ.get("TURSO_DATABASE_URL", "").strip()
+TURSO_TOKEN = os.environ.get("TURSO_AUTH_TOKEN", "").strip()
+USE_TURSO = bool(TURSO_URL and TURSO_TOKEN)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
@@ -141,13 +150,21 @@ DEFAULT_WORKERS = [
 
 @contextmanager
 def get_db():
-    conn = sqlite3.connect(DB_PATH, isolation_level=None, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    try:
-        yield conn
-    finally:
-        conn.close()
+    if USE_TURSO:
+        from turso_db import TursoConnection
+        conn = TursoConnection(TURSO_URL, TURSO_TOKEN)
+        try:
+            yield conn
+        finally:
+            conn.close()
+    else:
+        conn = sqlite3.connect(DB_PATH, isolation_level=None, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA foreign_keys = ON")
+        try:
+            yield conn
+        finally:
+            conn.close()
 
 
 # ===== Auth =====

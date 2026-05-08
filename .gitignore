@@ -9,6 +9,10 @@ data/baccita.db
 data/*.lock
 data/*.tmp
 data/*.wav
+baccita_dump.sql
+baccita.db
+turso_import.sql
+turso_schema.sql
 
 # Secretos - NUNCA commitear
 .env
